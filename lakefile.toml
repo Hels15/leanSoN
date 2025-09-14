@@ -1,0 +1,10 @@
+name = "leanSon"
+version = "0.1.0"
+defaultTargets = ["leanson"]
+
+[[lean_lib]]
+name = "LeanSon"
+
+[[lean_exe]]
+name = "leanson"
+root = "Main"
