@@ -1,27 +1,27 @@
+-- Defines SON lexer
 
-
-namespace Lexer
-structure lexer where
+structure Lexer where
  source: String
  position : String.Pos
 deriving Repr
 
-def LexerMk( sourcel: String) : lexer :=
+namespace lexer
+
+def LexerMK( sourcel: String) : Lexer :=
   {source:=sourcel, position:=0}
 
-def isEOF(lexer: lexer) :=
+def isEOF(lexer: Lexer): Bool :=
  lexer.position >= lexer.source.endPos
 
 
-def peekChar (lexer : Lexer.lexer) : Char :=
+def peekChar (lexer : Lexer) : Char :=
   if isEOF lexer then '\x00'   -- null character
   else lexer.source.get! lexer.position
 
-def nextChar (lexer : lexer) : Char :=
+def nextChar (lexer : Lexer) : Lexer × Char :=
   let c := peekChar lexer
   let newPos := lexer.source.next lexer.position
-  { lexer with position := newPos }
-  c
+  ({ lexer with position := newPos }, c)
 
 
-end Lexer
+end lexer

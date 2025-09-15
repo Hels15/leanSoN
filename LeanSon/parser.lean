@@ -1,12 +1,16 @@
-import LeanSon
-namespace Parser
+import LeanSon.Lexer
+import LeanSon.Node
+open node
+open lexer
+
 
 structure Parser where
-  lexerL: lexer
-  startN: node
+  lexerL: Lexer
+  startN: M Node
 
+namespace Parser
 def ParserMk (source:String ) : Parser :=
-{lexerL:= Lexer.empty, startN:= Node.empty}
+{lexerL:= LexerMK source, startN:= NodeMK #[]}
 
 
 end Parser

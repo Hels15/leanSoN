@@ -4,28 +4,25 @@ import LeanSon
 def test (a : Int) : Int := a + 1
 
 
-inductive MyBool
-| true
-| false
-
-def flip1 : MyBool → MyBool
-| MyBool.true  => MyBool.false
-| MyBool.false => MyBool.true
-
-structure Test where
- a: Nat
- b: Nat
-
-
-
-def test1: Test := {a:=1, b:=2}
-def change(x: Nat) (myTest: Test) : Test :=
-{myTest with a:=x}
-
-
 def main : IO Unit :=
   IO.println s!"Hello, {hello}!"
 
-#eval flip1 MyBool.false
-#eval change 4 test1
-#check test1
+-- Array removing
+
+structure Node where
+  nid     : Nat
+  inputs  : Array Node := #[]
+  outputs : Array Node := #[]
+deriving Repr
+
+-- Remove nodes with a specific id from an array
+def removeNodeById (arr : Array Node) (idToRemove : Nat) : Array Node :=
+  arr.filter (fun n => n.nid ≠ idToRemove)
+
+-- Example
+def n1: Node := { nid := 1 }
+def n2: Node := { nid := 2 }
+def n3: Node := { nid := 3 }
+
+#eval removeNodeById #[n1, n2, n3] 2
+-- Output: #[{nid := 1, inputs := #[], outputs := #[]}, {nid := 3, inputs := #[], outputs := #[]}]
