@@ -57,6 +57,7 @@ def NodeMK (inputs : Array Node := #[]) : M Node := do
   addNode2 newNode
   return newNode
 
+
 def getIn(n: Node) (i: Fin n.inputs.size) : Node :=
   n.inputs[i]
 

@@ -1,21 +1,19 @@
 import LeanSon.Node
-namespace ConstantNode
+
 
 open node
 
-def setControl (n : Node) (ctrl : Node) : Node :=
-  let newInputs :=
-    if n.inputs.size > 0 then
-      n.inputs.set! 0 ctrl
-    else
-      #[ctrl]
-  { n with inputs := newInputs }
+structure ConstantNode extends Node where
+  value: Int
 
 
-def NodeMk (nodel : Node) (control : Node) (value : Int) : node.Node :=
-  --let newNode: Node := { nodel with value := value }
-  --let newNode := setControl newNode control
-  --newNode
-  control 
+-- Sets control implicitly
+def ConstantNode.NodeMk (nodel : Node) (control : Node) (value : Int) : M ConstantNode := do
+  let uid := (← get).uniqueNodeId
+  let newNode : ConstantNode := {toNode := {nid := uid, inputs := #[control], outputs := (#[] : Array Node) }, value := value}
 
-end ConstantNode
+  let updatedInputs := newNode.inputs.map (fun n => { n with outputs := n.outputs.push newNode })
+  let newNode: ConstantNode := { newNode with toNode.inputs := updatedInputs }
+
+  addNode2 newNode
+  return newNode
