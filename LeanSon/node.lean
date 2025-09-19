@@ -4,13 +4,22 @@
 -- To make the compiler multi-threaded, this field will have to move into a TLS.
 -- Starting with value 1, to avoid bugs confusing node ID 0 with uninitialized values.
 
+-- Represents an index into the arena
+structure NodeRef where
+  nid: Nat
+deriving Inhabited, Repr
+
+inductive NodeData where
+  | constantl (value: Int64)
+  | nullData
+deriving Inhabited, Repr
 
 structure Node where
-
-nid:     Nat
-inputs:  Array  Node := #[]
-outputs: Array  Node := #[]
-
+ref: NodeRef
+inputs:  Array  NodeRef := #[]
+outputs: Array  NodeRef := #[]
+data: NodeData
+deriving Inhabited, Repr
 
 -- Node arena
 structure ManyNodes where
@@ -19,6 +28,15 @@ structure ManyNodes where
 
 abbrev M := StateRefT ManyNodes IO
 
+
+def updateNode (idx : Nat) (f : Node → Node) : M Unit := do
+  modify fun s =>
+    { s with allNodes := s.allNodes.modify idx f }
+
+def updateInputsOutputsNid (inputs : Array NodeRef) (newNode : Node) : M Unit := do
+  for ref in inputs do
+    updateNode ref.nid (fun n => { n with outputs := n.outputs.push newNode.ref })
+
 -- Each node has a unique dense Node ID within a compilation context
 -- The ID is useful for debugging, for using as an offset in a bitvector,
 -- as well as for computing equality of nodes (to be implemented later).
@@ -26,14 +44,6 @@ abbrev M := StateRefT ManyNodes IO
 
 namespace node
 --        ///////// ARENA    ///////////
--- Add empty node to the Arena
-def addNode1 : M Node := do
-  let newNode := { nid := (← get).uniqueNodeId }
-  modify fun arena =>
-  { arena with
-    uniqueNodeId := arena.uniqueNodeId + 1,
-    allNodes     := arena.allNodes.push newNode }
-  return newNode
 
 -- Add a custom node to the arena
 def addNode2 (newNode : Node) : M Unit := do
@@ -47,9 +57,10 @@ def addNode2 (newNode : Node) : M Unit := do
 --        ///////// ARENA    ///////////
 
 -- Create a new node and update outputs of input nodes
-def NodeMK (inputs : Array Node := #[]) : M Node := do
+def NodeMK (inputs : Array NodeRef := #[]) : M Node := do
   let uid := (← get).uniqueNodeId
-  let newNode : Node := { nid := uid, inputs := inputs, outputs := (#[] : Array Node) }
+  let ref: NodeRef := {nid := uid}
+  let newNode : Node := { ref := ref, inputs := inputs, outputs := (#[] : Array NodeRef), data := NodeData.nullData }
   -- Update outputs of all input nodes
   let updatedInputs := inputs.map (fun n => { n with outputs := n.outputs.push newNode })
   let newNode: Node := { newNode with inputs := updatedInputs }
@@ -58,7 +69,7 @@ def NodeMK (inputs : Array Node := #[]) : M Node := do
   return newNode
 
 
-def getIn(n: Node) (i: Fin n.inputs.size) : Node :=
+def getIn(n: Node) (i: Fin n.inputs.size) : NodeRef :=
   n.inputs[i]
 
 def nIns(n: Node): Nat :=
